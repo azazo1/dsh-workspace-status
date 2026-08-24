@@ -1,6 +1,7 @@
 interface SessionSummary {
     running?: boolean;
     completed?: boolean;
+    pendingInteraction?: 'approval' | 'plan-review' | 'question';
 }
 interface SessionListState {
     byId: Record<string, SessionSummary | undefined>;

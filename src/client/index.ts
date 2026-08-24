@@ -3,6 +3,7 @@ import { createElement } from 'react'
 interface SessionSummary {
   running?: boolean
   completed?: boolean
+  pendingInteraction?: 'approval' | 'plan-review' | 'question'
 }
 
 interface SessionListState {
@@ -27,6 +28,16 @@ const style = `
 @keyframes dsh-workspace-status-pulse {
   0%, 100% { color: var(--ds-accent, #4f9cff); filter: drop-shadow(0 0 0 transparent); transform: scale(1); }
   50% { color: color-mix(in srgb, var(--ds-accent, #4f9cff) 72%, white); filter: drop-shadow(0 0 5px currentColor); transform: scale(1.14); }
+}
+
+[role="tree"] > div:has([data-state="warning"]) > * > [role="treeitem"] > span:first-child,
+[data-dsh-workspace-status-pending="true"] {
+  color: var(--ds-warning, #d99a22);
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--ds-warning, #d99a22) 60%, transparent));
+}
+
+[role="tree"] > div:has([data-state="warning"]) > * > [role="treeitem"] > span:first-child svg {
+  color: var(--ds-warning, #d99a22);
 }
 
 [role="tree"] > div:has([data-state="ongoing"]) > * > [role="treeitem"] > span:first-child {
@@ -59,15 +70,19 @@ function WorkspaceState(props: SlotProps) {
   const rules: string[] = []
 
   workspaces.forEach((workspace, index) => {
+    let pending = false
     let active = false
     let unread = false
     workspace.sessionIds.forEach(sessionId => {
       const session = sessions[sessionId]
+      if (session?.pendingInteraction !== undefined) pending = true
       if (session?.running === true) active = true
       if (session?.completed === true) unread = true
     })
     const row = `[role="tree"] > div:nth-child(${index + 1}) > * > [role="treeitem"] > span:first-child`
-    if (active) {
+    if (pending) {
+      rules.push(`${row}{color:var(--ds-warning,#d99a22);filter:drop-shadow(0 0 4px color-mix(in srgb,var(--ds-warning,#d99a22) 60%,transparent))}`)
+    } else if (active) {
       rules.push(`${row}{animation:dsh-workspace-status-pulse 1.6s ease-in-out infinite;transform-origin:center;color:var(--ds-accent,#4f9cff)}`)
     } else if (unread) {
       rules.push(`${row}{color:var(--ds-success,#22a06b);filter:drop-shadow(0 0 4px color-mix(in srgb,var(--ds-success,#22a06b) 55%,transparent))}`)
