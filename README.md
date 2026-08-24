@@ -19,5 +19,5 @@ just verify
 将本包作为 DSH Web profile 的插件来源, 或通过 GitHub 仓库安装:
 
 ```shell
-dsh plugin --profile web add OWNER/REPOSITORY
+dsh plugin --profile web add azazo1/dsh-workspace-status
 ```
