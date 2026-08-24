@@ -30,10 +30,16 @@ const style = `
   50% { color: color-mix(in srgb, var(--ds-accent, #4f9cff) 72%, white); filter: drop-shadow(0 0 5px currentColor); transform: scale(1.14); }
 }
 
+@keyframes dsh-workspace-status-pending {
+  0%, 100% { opacity: 0.68; filter: drop-shadow(0 0 1px currentColor); transform: scale(1); }
+  50% { opacity: 1; filter: drop-shadow(0 0 6px currentColor); transform: scale(1.08); }
+}
+
 [role="tree"] > div:has([data-state="warning"]) > * > [role="treeitem"] > span:first-child,
 [data-dsh-workspace-status-pending="true"] {
   color: var(--ds-warning, #d99a22);
-  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--ds-warning, #d99a22) 60%, transparent));
+  animation: dsh-workspace-status-pending 2s ease-in-out infinite;
+  transform-origin: center;
 }
 
 [role="tree"] > div:has([data-state="warning"]) > * > [role="treeitem"] > span:first-child svg {
@@ -56,6 +62,7 @@ const style = `
 }
 
 @media (prefers-reduced-motion: reduce) {
+  [role="tree"] > div:has([data-state="warning"]) > * > [role="treeitem"] > span:first-child,
   [role="tree"] > div:has([data-state="ongoing"]) > * > [role="treeitem"] > span:first-child {
     animation: none;
     filter: none;
@@ -81,7 +88,7 @@ function WorkspaceState(props: SlotProps) {
     })
     const row = `[role="tree"] > div:nth-child(${index + 1}) > * > [role="treeitem"] > span:first-child`
     if (pending) {
-      rules.push(`${row}{color:var(--ds-warning,#d99a22);filter:drop-shadow(0 0 4px color-mix(in srgb,var(--ds-warning,#d99a22) 60%,transparent))}`)
+      rules.push(`${row}{color:var(--ds-warning,#d99a22);animation:dsh-workspace-status-pending 2s ease-in-out infinite;transform-origin:center}`)
     } else if (active) {
       rules.push(`${row}{animation:dsh-workspace-status-pulse 1.6s ease-in-out infinite;transform-origin:center;color:var(--ds-accent,#4f9cff)}`)
     } else if (unread) {
