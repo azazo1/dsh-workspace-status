@@ -21,8 +21,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json && tsdown -c tsdown.config.mjs",
-    "typecheck": "tsc -p tsconfig.json --noEmit --pretty false",
-    "prepare": "pnpm run build"
+    "typecheck": "tsc -p tsconfig.json --noEmit --pretty false"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.0",
