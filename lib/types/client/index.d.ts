@@ -7,6 +7,8 @@ interface SessionListState {
 /** workspace 列表快照. */
 interface WorkspaceListState {
     items: readonly WorkspaceView[];
+    /** 已归档会话在列表里不渲染, 标题反查需要把它们排除. */
+    archivedSessionIds: readonly string[];
 }
 interface SlotProps {
     useSessions: <Selected>(selector: (state: SessionListState) => Selected) => Selected;

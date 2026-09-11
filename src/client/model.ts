@@ -19,6 +19,8 @@ export interface SessionSummary {
   readonly displayTitle?: string
   /** 尚未产生内容的占位会话, 行上显示的是本地化的 New Session 文案. */
   readonly blank?: boolean
+  /** subagent 子会话不会在列表里渲染成行, 不参与标题反查. */
+  readonly origin?: 'subagent'
 }
 
 /** 一个 workspace 及其归属的会话 id. */
@@ -56,17 +58,32 @@ export function isLiveJob(job: JobSummary): boolean {
 /**
  * 会话显示标题到会话 id 的反查表, 供会话行 DOM 标记定位使用.
  *
- * 空白会话行显示的是本地化文案而不是标题, 不参与反查; 同一标题落在多个
- * 会话上时保留全部 id, 由使用者决定放弃标记.
+ * 行上没有会话 id, 标题是唯一的对应关系, 因此这里只收录 "真的会渲染成一行"
+ * 的会话, 与列表的可见性规则保持一致:
+ *
+ * - 空白会话行显示本地化文案而不是标题, 不参与;
+ * - subagent 子会话不在列表里成行, 不参与;
+ * - 已归档会话不渲染, 不参与.
+ *
+ * 后两类若收录进来, 一个与父会话同名的子会话 (子会话继承的还是同一个项目
+ * 目录名) 就会把父会话的行一起挡掉, 而它们自己压根没有行需要标记.
+ *
+ * 收录进来的会话仍然允许同名: 那种情况下对应多个渲染行, 无法判断哪一行是
+ * 哪一个, 由使用者放弃标记.
  * @param sessions - 会话列表快照.
+ * @param archivedSessionIds - 已归档会话, 它们在列表里不渲染.
  */
 export function titleIndex(
   sessions: Readonly<Record<string, SessionSummary | undefined>>,
+  archivedSessionIds: readonly string[],
 ): Map<string, string[]> {
+  const archived = new Set(archivedSessionIds)
   const index = new Map<string, string[]>()
   for (const [sessionId, session] of Object.entries(sessions)) {
-    const title = session?.displayTitle
-    if (session === undefined || session.blank === true || title === undefined || title === '') continue
+    if (session === undefined || session.blank === true || session.origin === 'subagent') continue
+    if (archived.has(sessionId)) continue
+    const title = session.displayTitle
+    if (title === undefined || title === '') continue
     const ids = index.get(title)
     if (ids === undefined) index.set(title, [sessionId])
     else ids.push(sessionId)

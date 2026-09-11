@@ -20,6 +20,8 @@ interface SessionListState {
 /** workspace 列表快照. */
 interface WorkspaceListState {
   items: readonly WorkspaceView[]
+  /** 已归档会话在列表里不渲染, 标题反查需要把它们排除. */
+  archivedSessionIds: readonly string[]
 }
 
 interface SlotProps {
@@ -35,6 +37,7 @@ function emptySnapshot(): RowMarkerSnapshot {
 
 function WorkspaceState(props: SlotProps) {
   const workspaces = props.useWorkspaces(state => state.items)
+  const archivedSessionIds = props.useWorkspaces(state => state.archivedSessionIds)
   const sessions = props.useSessions(state => state.byId)
   const jobsBySession = props.useSessions(state => state.jobsBySession)
   const pendingInteractions = props.useSessionPendingInteraction(state => state)
@@ -47,7 +50,7 @@ function WorkspaceState(props: SlotProps) {
   ))
 
   // 会话行没有官方槽位, 只能按标题反查出会话 id 再去标记 DOM.
-  const byTitle = useMemo(() => titleIndex(sessions), [sessions])
+  const byTitle = useMemo(() => titleIndex(sessions, archivedSessionIds), [sessions, archivedSessionIds])
   const liveJobSessions = useMemo(() => sessionsWithLiveJobs(jobsBySession), [jobsBySession])
   const snapshotRef = useRef<RowMarkerSnapshot>(emptySnapshot())
   snapshotRef.current = { byTitle, liveJobSessions }
