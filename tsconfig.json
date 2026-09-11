@@ -8,7 +8,7 @@
     "emitDeclarationOnly": true,
     "outDir": "lib/types",
     "rootDir": "src",
-    "lib": ["ES2024", "DOM"],
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
     "allowImportingTsExtensions": true,
     "rewriteRelativeImportExtensions": true,
     "skipLibCheck": true,
