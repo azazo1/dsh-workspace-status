@@ -14,8 +14,12 @@ typecheck:
 build:
     pnpm run build
 
-# 检查类型, 构建和 package 内容.
-verify: typecheck build
+# 执行发布入口的渲染回归测试.
+test:
+    pnpm test
+
+# 检查类型, 构建, 测试和 package 内容.
+verify: typecheck build test
     pnpm pack --dry-run
 
 # 删除构建产物.

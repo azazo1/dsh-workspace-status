@@ -1,14 +1,11 @@
 import { type JobsBySession, type PendingInteractionMap, type SessionSummary, type WorkspaceView } from './model.ts';
-/** 会话列表快照中本插件读取的两块: 行摘要与后台任务镜像. */
+/** 会话列表快照中本插件读取的行摘要与后台任务镜像. */
 interface SessionListState {
     byId: Readonly<Record<string, SessionSummary | undefined>>;
     jobsBySession: JobsBySession;
 }
-/** workspace 列表快照. */
 interface WorkspaceListState {
     items: readonly WorkspaceView[];
-    /** 已归档会话在列表里不渲染, 标题反查需要把它们排除. */
-    archivedSessionIds: readonly string[];
 }
 interface SlotProps {
     useSessions: <Selected>(selector: (state: SessionListState) => Selected) => Selected;

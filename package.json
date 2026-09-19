@@ -21,7 +21,8 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json && tsdown -c tsdown.config.mjs",
-    "typecheck": "tsc -p tsconfig.json --noEmit --pretty false"
+    "typecheck": "tsc -p tsconfig.json --noEmit --pretty false",
+    "test": "node --test test/*.test.mjs"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.0",
@@ -30,7 +31,9 @@
   "devDependencies": {
     "@deepseek-ai/cordis": "^4.0.0",
     "@types/react": "^18.3.0",
-    "react": "^18.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "jsdom": "^26.1.0",
     "tsdown": "^0.15.0",
     "typescript": "^5.9.0"
   },
