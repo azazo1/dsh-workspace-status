@@ -13,8 +13,6 @@ export interface JobSummary {
 
 /** 会话列表行中本插件用到的字段子集. */
 export interface SessionSummary {
-  readonly running?: boolean
-  readonly completed?: boolean
   /** 尚未产生内容的占位会话不标记. */
   readonly blank?: boolean
 }
@@ -28,8 +26,12 @@ export interface WorkspaceView {
 /** 会占用 workspace 行提示色的交互种类; 其余种类不在目录行上呈现. */
 const PENDING_KINDS: ReadonlySet<string> = new Set(['approval', 'plan-review', 'question'])
 
-/** 会话到待处理交互的映射 (ui-session 的 pending interaction 快照). */
-export type PendingInteractionMap = ReadonlyMap<string, { readonly kind: string } | undefined>
+/** 会话到运行态与待处理交互的映射 (ui-session 的状态快照). */
+export type SessionStatusMap = ReadonlyMap<string, {
+  readonly running?: boolean
+  readonly completionUnread?: boolean
+  readonly pendingInteraction?: { readonly kind: string }
+} | undefined>
 
 /** 会话到后台任务列表的映射 (session-controller 的 jobsBySession 镜像). */
 export type JobsBySession = Readonly<Record<string, readonly JobSummary[] | undefined>>
@@ -67,22 +69,22 @@ export function sessionsWithLiveJobs(jobsBySession: JobsBySession): Set<string> 
  * 聚合一个 workspace 的标记状态.
  * @param workspace - workspace 行及其会话归属.
  * @param sessions - 会话列表快照.
- * @param pendingInteractions - 等待用户处理的交互快照.
+ * @param sessionStatuses - 会话运行态与待处理交互快照.
  * @param jobsBySession - 每个会话可见的后台任务.
  * @returns 该 workspace 行需要呈现的事实.
  */
 export function workspaceStatus(
   workspace: WorkspaceView,
   sessions: Readonly<Record<string, SessionSummary | undefined>>,
-  pendingInteractions: PendingInteractionMap,
+  sessionStatuses: SessionStatusMap,
   jobsBySession: JobsBySession,
 ): WorkspaceStatus {
   const status: WorkspaceStatus = { pending: false, active: false, unread: false, liveJobs: 0 }
   workspace.sessionIds.forEach(sessionId => {
-    const session = sessions[sessionId]
+    const session = sessionStatuses.get(sessionId)
     if (session?.running === true) status.active = true
-    if (session?.completed === true) status.unread = true
-    const kind = pendingInteractions.get(sessionId)?.kind
+    if (session?.completionUnread === true) status.unread = true
+    const kind = session?.pendingInteraction?.kind
     if (kind !== undefined && PENDING_KINDS.has(kind)) status.pending = true
     const jobs = jobsBySession[sessionId]
     if (jobs === undefined) return

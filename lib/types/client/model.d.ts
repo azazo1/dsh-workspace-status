@@ -10,8 +10,6 @@ export interface JobSummary {
 }
 /** 会话列表行中本插件用到的字段子集. */
 export interface SessionSummary {
-    readonly running?: boolean;
-    readonly completed?: boolean;
     /** 尚未产生内容的占位会话不标记. */
     readonly blank?: boolean;
 }
@@ -20,9 +18,13 @@ export interface WorkspaceView {
     readonly workspaceId: string;
     readonly sessionIds: readonly string[];
 }
-/** 会话到待处理交互的映射 (ui-session 的 pending interaction 快照). */
-export type PendingInteractionMap = ReadonlyMap<string, {
-    readonly kind: string;
+/** 会话到运行态与待处理交互的映射 (ui-session 的状态快照). */
+export type SessionStatusMap = ReadonlyMap<string, {
+    readonly running?: boolean;
+    readonly completionUnread?: boolean;
+    readonly pendingInteraction?: {
+        readonly kind: string;
+    };
 } | undefined>;
 /** 会话到后台任务列表的映射 (session-controller 的 jobsBySession 镜像). */
 export type JobsBySession = Readonly<Record<string, readonly JobSummary[] | undefined>>;
@@ -48,8 +50,8 @@ export declare function sessionsWithLiveJobs(jobsBySession: JobsBySession): Set<
  * 聚合一个 workspace 的标记状态.
  * @param workspace - workspace 行及其会话归属.
  * @param sessions - 会话列表快照.
- * @param pendingInteractions - 等待用户处理的交互快照.
+ * @param sessionStatuses - 会话运行态与待处理交互快照.
  * @param jobsBySession - 每个会话可见的后台任务.
  * @returns 该 workspace 行需要呈现的事实.
  */
-export declare function workspaceStatus(workspace: WorkspaceView, sessions: Readonly<Record<string, SessionSummary | undefined>>, pendingInteractions: PendingInteractionMap, jobsBySession: JobsBySession): WorkspaceStatus;
+export declare function workspaceStatus(workspace: WorkspaceView, sessions: Readonly<Record<string, SessionSummary | undefined>>, sessionStatuses: SessionStatusMap, jobsBySession: JobsBySession): WorkspaceStatus;

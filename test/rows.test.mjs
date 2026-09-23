@@ -75,11 +75,16 @@ test('同名会话的任务蓝点按 ID 更新, 重排和改名不串行, 卸载
     throw new Error('蓝点 DOM 更新未收敛')
   }
   async function render(nodes, jobsBySession, { mounted = true, known = nodes } = {}) {
-    const state = { byId: Object.fromEntries(known.map(node => [node.id, node])), jobsBySession }
+    const state = {
+      ids: known.map(node => node.id),
+      byId: Object.fromEntries(known.map(node => [node.id, node])),
+    }
     const props = {
       useSessions: selector => selector(state),
+      useSessionStatus: selector => selector(new Map()),
       useWorkspaces: selector => selector({ items: [] }),
-      useSessionPendingInteraction: selector => selector(new Map()),
+      useJobs: selector => selector({ rows: jobsBySession }),
+      watchRows: () => () => {},
     }
     await act(async () => root.render(React.createElement(React.Fragment, null,
       nodes.map(node => React.createElement(SessionNodeItem, { key: node.id, node })),
