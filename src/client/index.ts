@@ -40,12 +40,28 @@ function WorkspaceState(props: SlotProps) {
   const jobsBySession = props.useJobs(state => state.rows)
   const watchRows = props.watchRows
 
+  // 任务镜像只为已订阅的会话保留行, 所以订阅要按会话增量对齐. 会话列表每次投影
+  // 都会给出新的 ids 数组, 若把订阅挂在 ids 依赖上整体重建, 宿主会在每次列表
+  // 变化时关掉再重开全部会话的任务流.
+  const watchedRef = useRef(new Map<string, () => void>())
   useEffect(() => {
-    const releases = sessionIds.map(watchRows)
-    return () => {
-      for (const release of releases) release()
+    const watched = watchedRef.current
+    const wanted = new Set(sessionIds)
+    for (const [sessionId, release] of watched) {
+      if (wanted.has(sessionId)) continue
+      watched.delete(sessionId)
+      release()
+    }
+    for (const sessionId of wanted) {
+      if (watched.has(sessionId)) continue
+      watched.set(sessionId, watchRows(sessionId))
     }
   }, [sessionIds, watchRows])
+  useEffect(() => () => {
+    const watched = watchedRef.current
+    watchedRef.current = new Map()
+    for (const release of watched.values()) release()
+  }, [])
 
   const statuses = workspaces.map(workspace => workspaceStatus(
     workspace,

@@ -49,6 +49,8 @@ test('同名会话的任务蓝点按 ID 更新, 重排和改名不串行, 卸载
     register(options, component) { MarkerComponent = component },
   } })
   assert.equal(typeof MarkerComponent, 'function')
+  let watchCalls = 0
+  let releaseCalls = 0
   const sessions = [
     { id: 's1', displayTitle: '相同标题 (1)', blank: false },
     { id: 's2', displayTitle: '相同标题 (1)', blank: false },
@@ -84,7 +86,10 @@ test('同名会话的任务蓝点按 ID 更新, 重排和改名不串行, 卸载
       useSessionStatus: selector => selector(new Map()),
       useWorkspaces: selector => selector({ items: [] }),
       useJobs: selector => selector({ rows: jobsBySession }),
-      watchRows: () => () => {},
+      watchRows: sessionId => {
+        watchCalls += 1
+        return () => { releaseCalls += 1 }
+      },
     }
     await act(async () => root.render(React.createElement(React.Fragment, null,
       nodes.map(node => React.createElement(SessionNodeItem, { key: node.id, node })),
@@ -102,6 +107,9 @@ test('同名会话的任务蓝点按 ID 更新, 重排和改名不串行, 卸载
   })
   assert.equal(marker('s1'), first)
   assert.equal(marker('s2').closest('[data-row]').getAttribute('data-row'), 's2')
+  // 重排和改名只换掉 ids 数组身份, 不该重开任务流.
+  assert.equal(watchCalls, 2)
+  assert.equal(releaseCalls, 0)
   await render(sessions, { s1: [{ status: 'failed' }], s2: [{ status: 'running' }] })
   assert.equal(marker('s1'), null)
   assert.notEqual(marker('s2'), null)
@@ -123,4 +131,7 @@ test('同名会话的任务蓝点按 ID 更新, 重排和改名不串行, 卸载
   await render(sessions, { s1: [{ status: 'running' }] })
   await render(sessions, {}, { mounted: false })
   assert.equal(document.querySelectorAll(owner).length, 0)
+  // 卸载只释放仍在持有的订阅.
+  assert.equal(watchCalls, 4)
+  assert.equal(releaseCalls, 4)
 })
