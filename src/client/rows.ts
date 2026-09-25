@@ -4,7 +4,10 @@ import { rowSessionId } from './row-identity.ts'
 /** 本插件独立持有行蓝点, 不依赖其他插件插入的节点或属性. */
 export const MARKER_OWNER = 'dsh-workspace-status'
 
-/** 搜索结果是 button 且布局不同, 蓝点只注入常规会话行. */
+/**
+ * 侧边栏树里带选中态的行. 搜索结果行同样是这个形状, 但只有会话行带
+ * `session:` 行键, 身份判定会把搜索结果和 workspace 分组行排除掉.
+ */
 const ROW_SELECTOR = 'div[role="treeitem"][aria-selected]'
 const MARKER_SELECTOR = `:scope > [data-owner="${MARKER_OWNER}"]`
 

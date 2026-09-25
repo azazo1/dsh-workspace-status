@@ -55,11 +55,11 @@ test('同名会话的任务蓝点按 ID 更新, 重排和改名不串行, 卸载
     { id: 's1', displayTitle: '相同标题 (1)', blank: false },
     { id: 's2', displayTitle: '相同标题 (1)', blank: false },
   ]
-  function SessionNodeItem({ node }) {
+  function SessionNodeItem({ session }) {
     return React.createElement('span', null,
-      React.createElement('div', { role: 'treeitem', 'aria-selected': false, 'data-row': node.id },
+      React.createElement('div', { role: 'treeitem', 'aria-selected': false, 'data-row-key': `session:${session.id}` },
         React.createElement('span', { className: 'slot' }),
-        React.createElement('span', null, node.displayTitle),
+        React.createElement('span', null, session.displayTitle),
         React.createElement('span', null, '7d')))
   }
   const marker = id => document.querySelector(`${owner}[data-session-id="${id}"]`)
@@ -92,34 +92,42 @@ test('同名会话的任务蓝点按 ID 更新, 重排和改名不串行, 卸载
       },
     }
     await act(async () => root.render(React.createElement(React.Fragment, null,
-      nodes.map(node => React.createElement(SessionNodeItem, { key: node.id, node })),
+      nodes.map(node => React.createElement(SessionNodeItem, { key: node.id, session: node })),
       mounted && React.createElement(MarkerComponent, { key: 'plugin', ...props }),
     )))
     await flush()
   }
 
   await render(sessions, { s1: [{ status: 'running' }], s2: [{ status: 'completed' }] })
-  assert.equal(marker('s1').closest('[data-row]').getAttribute('data-row'), 's1')
+  assert.equal(marker('s1').closest('[data-row-key]').getAttribute('data-row-key'), 'session:s1')
   assert.equal(marker('s2'), null)
   const first = marker('s1')
   await render([sessions[1], { ...sessions[0], displayTitle: '改名' }], {
     s1: [{ status: 'running' }], s2: [{ status: 'stopping' }],
   })
   assert.equal(marker('s1'), first)
-  assert.equal(marker('s2').closest('[data-row]').getAttribute('data-row'), 's2')
+  assert.equal(marker('s2').closest('[data-row-key]').getAttribute('data-row-key'), 'session:s2')
   // 重排和改名只换掉 ids 数组身份, 不该重开任务流.
   assert.equal(watchCalls, 2)
   assert.equal(releaseCalls, 0)
   await render(sessions, { s1: [{ status: 'failed' }], s2: [{ status: 'running' }] })
   assert.equal(marker('s1'), null)
   assert.notEqual(marker('s2'), null)
+  // 搜索结果行 (无行键) 与 workspace 分组行 (非 session 行键) 都不标记,
+  // 即使标题和正在跑任务的会话行完全一样.
   const foreign = document.createElement('div')
   foreign.setAttribute('role', 'treeitem')
   foreign.setAttribute('aria-selected', 'false')
   foreign.innerHTML = '<span>相同标题 (1)</span>'
-  document.body.append(foreign)
+  const grouped = document.createElement('div')
+  grouped.setAttribute('role', 'treeitem')
+  grouped.setAttribute('aria-selected', 'false')
+  grouped.setAttribute('data-row-key', 'workspace:w1')
+  grouped.innerHTML = '<span>相同标题 (1)</span>'
+  document.body.append(foreign, grouped)
   await flush()
   assert.equal(foreign.querySelector(owner), null)
+  assert.equal(grouped.querySelector(owner), null)
   await render(sessions, { s1: [{ status: 'running' }], s2: [{ status: 'running' }] }, {
     known: [{ ...sessions[0], blank: true }],
   })
